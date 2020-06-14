@@ -1,0 +1,81 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE HTML>
+<html>
+<head>
+    <script>
+        window.onload = function () {
+
+            var dataPoints = [];
+
+            var chart = new CanvasJS.Chart("chartContainer", {
+                animationEnabled: true,
+                theme: "light2", // "light1", "light2", "dark1", "dark2"
+                title: {
+                    text: "Πωλήσεις, 2015 - 2016"
+                },
+                subtitles: [{
+                    text: "Monthly Average"
+                }],
+                axisX: {
+                    interval: 3,
+                    intervalType: "month",
+                    valueFormatString: "MMM YY"
+                },
+                axisY: {
+                    //includeZero: false,
+                    title: "Volume",
+                    labelFormatter: addSymbols
+                },
+                data: [{
+                    xValueFormatString: "MMM YY",
+                    dataPoints: dataPoints
+                }]
+            });
+
+            $.get("/home/csv", getDataPointsFromCSV);
+
+            //CSV Format
+            //YYYY-MM-DD,Volume
+            function getDataPointsFromCSV(csv) {
+                var csvLines = points = [];
+                csvLines = csv.split(/[\r?\n|\r|\n]+/);
+                for (var i = 0; i < csvLines.length; i++) {
+                    if (csvLines[i].length > 0) {
+                        points = csvLines[i].split(",");
+                        dataPoints.push({
+                            x: new Date(
+                                parseInt(points[0].split("-")[0], 10),
+                                parseInt(points[0].split("-")[1], 10) - 1, //month starts from 0
+                                parseInt(points[0].split("-")[2], 10)
+                            ),
+                            y: parseInt(points[1])
+                        });
+                    }
+                }
+                chart.render();
+            }
+
+            function addSymbols(e) {
+                var suffixes = ["", "K", "M", "B"];
+
+                var order = Math.max(Math.floor(Math.log(e.value) / Math.log(0)), 0);
+                if (order > suffixes.length - 1)
+                    order = suffixes.length - 1;
+
+                var suffix = suffixes[order];
+                return CanvasJS.formatNumber(e.value / Math.pow(0, order)) + suffix;
+
+            }
+
+        }
+    </script>
+</head>
+<body>
+    <div id="chartContainer" style="height: 370px; width: 100%;"></div>
+    <script type="text/javascript" src="https://canvasjs.com/assets/script/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="https://canvasjs.com/assets/script/jquery.canvasjs.min.js"></script>
+</body>
+</html>         
